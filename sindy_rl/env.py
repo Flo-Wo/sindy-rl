@@ -155,8 +155,13 @@ class BaseSurrogateEnv(gymnasium.Env):
         if self.config.get("init_real_on_start", False) or self.use_real_env:
             self.init_real_env()
 
-        if self.config.get("use_real_env", False):
-            self.use_real_env = True
+        print(
+            "\n\nENV.py: real_env = {}, old_api={}".format(
+                self.use_real_env, self.use_old_api
+            )
+        )
+        # if self.config.get("use_real_env", False):
+        #     self.use_real_env = True
 
     def _init_act(self):
         """Initialize the action space for the surrogate environment"""
@@ -277,11 +282,15 @@ class BaseSurrogateEnv(gymnasium.Env):
         """Steps through the full-order or surrogate environment"""
         self.action = action
         self.n_episode_steps += 1
+        # print("\n\nENV.py::step: = use_real_env{}".format(self.use_real_env))
 
         if self.use_real_env:
             return self._real_step(self.action)
 
         next_obs = self.dynamics_model.predict(self.obs, self.action)
+        # TODO(Reward): maybe add a flag to use the real reward model
+        # query self.real_env.get_reward(action) Attention -> self.state is used
+        # or extract the function
         rew = self.rew_model.predict(next_obs, self.action)
 
         self.obs = next_obs

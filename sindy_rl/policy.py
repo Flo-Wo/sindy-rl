@@ -1,5 +1,7 @@
 from gymnasium.spaces.box import Box
+from gymnasium import Env
 import numpy as np
+import torch
 
 
 class BasePolicy:
@@ -31,7 +33,11 @@ class FixedPolicy(BasePolicy):
 
 
 class RLlibPolicyWrapper(BasePolicy):
-    """Wraps an RLlib algorithm into a BasePolicy class"""
+    """
+    Wraps an RLlib algorithm into a BasePolicy class.
+
+    Provide the same interface as the controlgym agents.
+    """
 
     def __init__(self, algo, mode="algo"):
         self.algo = algo
@@ -42,6 +48,41 @@ class RLlibPolicyWrapper(BasePolicy):
         if self.mode == "policy":
             res = res[0]
         return res
+
+    def run(self, env: Env, state: np.ndarray[float] = None, seed: int = None) -> float:
+        """Execute a full-sweep of the controller within the environment.
+
+        Parameters
+        ----------
+        env : Env
+            PDE-like environment, more general a gymnasium environment.
+        state : np.ndarray[float], optional
+            Initial state to start with, by default None. If None, initialized
+            by the environment itself, during ``.reset()``.
+        seed : int, optional
+            Random seed, by default None.
+
+        Returns
+        -------
+        float
+            Total reward along the trajectory.
+        """
+        # reset the environment
+        observation, info = env.reset(seed=seed, state=state)
+        torch.manual_seed(seed=seed)
+        # run the simulated trajectory and calculate the h2 cost
+        total_reward = 0
+        state_traj = np.zeros((env.n_state, env.n_steps + 1))
+        state_traj[:, 0] = info["state"]
+        for t in range(env.n_steps):
+            action = self.compute_action(observation, explore=False)
+            observation, reward, terminated, truncated, info = env.step(action)
+            state_traj[:, t + 1] = info["state"]
+            if terminated or truncated:
+                break
+            total_reward += reward
+        env.state_traj = state_traj
+        return total_reward
 
 
 class RandomPolicy(BasePolicy):

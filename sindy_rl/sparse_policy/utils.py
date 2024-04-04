@@ -64,18 +64,18 @@ def get_models_from_prefix(
     return get_models(trial_dir, check_idx, return_policy=return_policy)
 
 
-def get_models(trial_dir, check_idx, return_policy=False):
+def get_models(trial_dir, check_idx, config=None, return_policy=False):
 
-    json_path = os.path.join(trial_dir, "params.json")
+    if not config:
+        json_path = os.path.join(trial_dir, "params.json")
+        with open(json_path, "r") as f:
+            config = json.load(f)
 
     ckpt_path = os.path.join(trial_dir, f"checkpoint_{check_idx:06}")
 
     dyn_path = os.path.join(trial_dir, f"checkpoint_{check_idx:06}", "dyn_model.pkl")
 
     rew_path = os.path.join(trial_dir, f"checkpoint_{check_idx:06}", "rew_model.pkl")
-
-    with open(json_path, "r") as f:
-        config = json.load(f)
 
     env = env_from_config(config, new_config=True)
 

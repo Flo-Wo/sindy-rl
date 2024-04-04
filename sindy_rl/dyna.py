@@ -136,12 +136,10 @@ class DynaSINDy(BaseDynaSINDy):
         drl_config_obj.training(model=model_config)
         self.logger.info("Training of drl_config_obj worked.")
 
-        print("\n\n create DRL object")
-        self.drl_algo = drl_config_obj.build(logger_creator=get_logger(self.config))
-        print("\n\n created DRL object")
         self.logger.info("drl_config_obj setup.")
+        self.drl_algo = drl_config_obj.build(logger_creator=get_logger(self.config))
+        self.logger.info("drl_config_obj is built.")
         self.on_policy_pi = RLlibPolicyWrapper(self.drl_algo)
-        self.logger.info("on_policy_pi setup")
         self.logger.info("...DRL algo setup.")
 
     def _init_real_env(self):
@@ -204,6 +202,10 @@ class DynaSINDy(BaseDynaSINDy):
         self.logger.info("Collecting data...")
         self.logger.info(rollout_kwargs)
         trajs_obs, trajs_acts, trajs_rews = rollout_env(env, pi, **rollout_kwargs)
+        # correct
+        # print("\n\ndyna.py::collect_data")
+        # print(trajs_rews)
+        # print("\n\n")
         buffer.add_data(trajs_obs, trajs_acts, trajs_rews)
         return trajs_obs, trajs_acts, trajs_rews
 
