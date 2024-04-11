@@ -42,7 +42,9 @@ class TensorBoardLogger(Logger):
         if self.dummy:
             return
         self.last_result = result
-        self._logger.debug(pretty_print(result))
+        self._logger.info("\n\nEpisode {}".format(result["training_iteration"]))
+        self._logger.info(pretty_print(result))
+        """
         of_interest = [
             "episode_reward_mean",
             "episode_reward_max",
@@ -55,6 +57,7 @@ class TensorBoardLogger(Logger):
             self.writer.add_scalar(key, result[key], global_step=iter_num)
             self._logger.info("Episode {}, {} : {}".format(iter_num, key, result[key]))
         self._logger.info("\n\n")
+        """
 
     def on_end(self):
         self.writer.close()

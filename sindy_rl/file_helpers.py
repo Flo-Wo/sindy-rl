@@ -17,14 +17,15 @@ def read_dyna_config(_parent_dir: str, filename: str, verbose: bool = True):
 
 
 def setup_folders(global_config: dict):
-    """Create the main folder (if not existing) and the logging subfolder.
+    """
+    Create the main folder (if not existing) and the logging subfolder.
     Save the config file into the main folder.
     """
     # setup the main folder
     folder_path = _get_folder_path(global_config)
     _create_dir_if_not_exists(folder_path)
 
-    # save the config file
+    # save the config file to reconstruct the experiment in the future
     with open(folder_path + "/exp_config.yml", "w") as yaml_file:
         yaml.dump(global_config, yaml_file, default_flow_style=False)
 
