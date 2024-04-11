@@ -4,12 +4,28 @@ from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 from ray.tune.logger import Logger, pretty_print
 import os
+from sindy_rl.file_helpers import get_logger_folder
 
 
 class TensorBoardLogger(Logger):
-    def __init__(self, config, logdir):
+    def __init__(self, config: dict, logdir: str, dummy: bool = False):
+        """Logger interacting with the Tensorboard. Since RayRL does not
+        accept no logger, we provide a dummy-flag which creates an empty logger.
+
+        Parameters
+        ----------
+        config : dict
+            Global config, based on the config.yml file.
+        logdir : str
+            Directory for the logs
+        dummy : bool, optional
+            Dummy flag, to create an empty logger, by default False.
+        """
         super().__init__(config, logdir)
-        now = "{date:%Y-%m-%d_%H:%M:%S}.log".format(date=datetime.now())
+        self.dummy = dummy
+        if self.dummy:
+            return
+        now = "{date:%Y-%m-%d_%H-%M-%S}.log".format(date=datetime.now())
         self._log_file = os.path.join(logdir, "log_" + now)
         self._logger = logging.getLogger(__name__)
         self._logger.setLevel(logging.INFO)
@@ -20,9 +36,11 @@ class TensorBoardLogger(Logger):
         file_handler.setFormatter(formatter)
 
         self._logger.addHandler(file_handler)
-        self.writer = SummaryWriter(log_dir=logdir + "tbf_log_" + now)
+        self.writer = SummaryWriter(log_dir=logdir + "/tbf" + now)
 
     def on_result(self, result, step=None):
+        if self.dummy:
+            return
         self.last_result = result
         self._logger.debug(pretty_print(result))
         of_interest = [
@@ -46,14 +64,15 @@ def get_logger(global_config):
     def get_tensorboard_logger(drl_algo_config):
         """Create a logger for Ray."""
         # Define the directory for logging
-        logdir = global_config.get("log_dir", None)
-        if logdir is None:
-            logdir = "./no_dir_given"
+        log_dir = get_logger_folder(global_config=global_config)
+        dummy = global_config.get("dummy_logger", False)
+        if log_dir is None:
+            log_dir = "./no_dir_given"
 
         # Configure logging
         logging.basicConfig(level=logging.INFO)
 
         # Create and return the UnifiedLogger
-        return TensorBoardLogger(global_config, logdir)
+        return TensorBoardLogger(global_config, log_dir, dummy=dummy)
 
     return get_tensorboard_logger

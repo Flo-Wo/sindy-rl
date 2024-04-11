@@ -158,6 +158,7 @@ class DynaSINDy(BaseDynaSINDy):
     def _init_off_policy(self):
         """Initialize the off-policy Policy"""
         self.off_policy_pi = self.config["off_policy_pi"]
+        logging.info("Type of off-policy = {}".format(type(self.off_policy_pi)))
         logging.info("DONE: init off-policy.")
 
     def _init_dynamics_model(self):
@@ -190,6 +191,9 @@ class DynaSINDy(BaseDynaSINDy):
                 self.real_env,
                 self.off_policy_pi,
                 **off_policy_init["kwargs"],
+            )
+            self.logger.info(
+                "Off policy buffer_length = {}".format(len(self.off_policy_buffer))
             )
             self.logger.info("Data collected.")
 

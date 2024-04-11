@@ -74,6 +74,7 @@ class RLlibPolicyWrapper(BasePolicy):
         total_reward = 0
         state_traj = np.zeros((env.n_state, env.n_steps + 1))
         state_traj[:, 0] = info["state"]
+        print("Env.n_steps {}".format(env.n_steps))
         for t in range(env.n_steps):
             action = self.compute_action(observation, explore=False)
             observation, reward, terminated, truncated, info = env.step(action)
