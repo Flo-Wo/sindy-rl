@@ -33,6 +33,10 @@ def setup_folders(global_config: dict):
     logger_path = get_logger_folder(global_config)
     _create_dir_if_not_exists(logger_path)
 
+    # setup the checkpoint dir
+    checkpoint_path = get_checkpoint_folder(global_config)
+    _create_dir_if_not_exists(checkpoint_path)
+
 
 def _get_folder_path(global_config: dict):
     global_dir = global_config.get("global_dir")
@@ -47,6 +51,14 @@ def get_logger_folder(global_config: dict):
         return None
     folder_path = _get_folder_path(global_config)
     return folder_path + logdir
+
+
+def get_checkpoint_folder(global_config: dict):
+    checkpt_dir = global_config.get("checkpoint_dir", None)
+    if checkpt_dir is None:
+        return None
+    folder_path = _get_folder_path(global_config)
+    return folder_path + checkpt_dir
 
 
 def _create_dir_if_not_exists(path: str):
