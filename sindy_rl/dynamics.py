@@ -229,6 +229,7 @@ class EnsembleSINDyDynamicsModel(BaseDynamicsModel):
             x_list = self.model.simulate(x0, u=u, t=t, **kwargs)
             if np.any(np.abs(x_list) > upper_bound):
                 # TODO(analyze the blow-up)
+                # u.shape = (1,8) -> simulate one time step
                 np.save("blowup_error_x0.npy", x_list)
                 np.save("blowup_error_state.npy", x_list)
                 np.save("blowup_error_control.npy", u)

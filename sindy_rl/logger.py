@@ -69,7 +69,9 @@ def get_logger(global_config):
         # Define the directory for logging
         # log_dir = get_subfolder_path(global_config=global_config, key="log_dir")
         log_dir = global_config["log_dir"]
+        print(log_dir)
         dummy = global_config.get("dummy_logger", False)
+        print(dummy)
         if log_dir is None:
             log_dir = "./no_dir_given"
 
