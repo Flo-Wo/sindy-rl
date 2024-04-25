@@ -4,7 +4,7 @@ from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 from ray.tune.logger import Logger, pretty_print
 import os
-from sindy_rl.file_helpers import get_logger_folder
+from sindy_rl.file_helpers import get_subfolder_path
 
 
 class TensorBoardLogger(Logger):
@@ -67,7 +67,8 @@ def get_logger(global_config):
     def get_tensorboard_logger(drl_algo_config):
         """Create a logger for Ray."""
         # Define the directory for logging
-        log_dir = get_logger_folder(global_config=global_config)
+        # log_dir = get_subfolder_path(global_config=global_config, key="log_dir")
+        log_dir = global_config["log_dir"]
         dummy = global_config.get("dummy_logger", False)
         if log_dir is None:
             log_dir = "./no_dir_given"

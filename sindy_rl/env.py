@@ -67,10 +67,13 @@ def rollout_env(
 
     act_list = []
     rew_list = []
+    real_rew_list = []
 
     trajs_obs = []
     trajs_acts = []
     trajs_rews = []
+
+    trajs_real_rews = []
 
     for i in tqdm(range(n_steps), disable=not verbose):
 
@@ -80,6 +83,7 @@ def rollout_env(
         act_list.append(action)
         obs_list.append(obs)
         rew_list.append(rew)
+        real_rew_list.append(info["proj_real_rew"])
 
         # handle resets
         if done or len(obs_list) > n_steps_reset:
@@ -87,10 +91,12 @@ def rollout_env(
             trajs_obs.append(np.array(obs_list))
             trajs_acts.append(np.array(act_list))
             trajs_rews.append(np.array(rew_list))
+            trajs_real_rews.append(np.array(real_rew_list))
 
             obs_list = [safe_reset(env.reset())]
             act_list = []
             rew_list = []
+            real_rew_list = []
 
         # env callback
         if env_callback:
@@ -102,7 +108,8 @@ def rollout_env(
         trajs_obs.append(np.array(obs_list))
         trajs_acts.append(np.array(act_list))
         trajs_rews.append(np.array(rew_list))
-    return trajs_obs, trajs_acts, trajs_rews
+        trajs_real_rews.append(np.array(real_rew_list))
+    return trajs_obs, trajs_acts, trajs_rews, trajs_real_rews
 
 
 class BaseSurrogateEnv(gymnasium.Env):
@@ -148,16 +155,20 @@ class BaseSurrogateEnv(gymnasium.Env):
         # whether to use the real environment instead of the surrogate
         # can be useful for debugging or evaluating
         self.use_real_env = self.config.get("use_real_env", False)
+        # e.g. couple the surrogate env with the real reward
+        self.use_real_reward = self.config.get("use_real_reward", False)
 
         # whether to initiliaze the real environment.
         # it is recommended to avoid initializing expensive full-order models
         # and instead sample initial conditions from a buffer.
-        if self.config.get("init_real_on_start", False) or self.use_real_env:
+        if self.use_real_env or self.use_real_reward:
             self.init_real_env()
 
         print(
-            "\n\nENV.py: real_env = {}, old_api={}".format(
-                self.use_real_env, self.use_old_api
+            "\n\nENV.py: real_env = {}, old_api={}, use_real_reward={}".format(
+                self.use_real_env,
+                self.use_old_api,
+                self.use_real_reward,
             )
         )
         # if self.config.get("use_real_env", False):
@@ -288,13 +299,16 @@ class BaseSurrogateEnv(gymnasium.Env):
             return self._real_step(self.action)
 
         next_obs = self.dynamics_model.predict(self.obs, self.action)
-        # TODO(Reward): maybe add a flag to use the real reward model
-        # query self.real_env.get_reward(action) Attention -> self.state is used
-        # or extract the function
+        # use the real reward of the environment
         rew = self.rew_model.predict(next_obs, self.action)
+        proj_real_rew = 0
+        if self.use_real_reward:
+            proj_real_rew = self.real_env.projected_reward(next_obs, self.action)
+        # rew_diff = (rew - proj_real_rew) / np.abs(rew)
+        # print("real_rew - rew = {}".format(rew_diff))
 
         self.obs = next_obs
-        info = {}
+        info = {"proj_real_rew": proj_real_rew}
 
         if self.use_old_api:
             done = self.is_trunc() or self.is_term()

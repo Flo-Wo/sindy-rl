@@ -29,13 +29,13 @@ def setup_folders(global_config: dict):
     with open(folder_path + "/exp_config.yml", "w") as yaml_file:
         yaml.dump(global_config, yaml_file, default_flow_style=False)
 
-    # setup the logger subfolder
-    logger_path = get_logger_folder(global_config)
-    _create_dir_if_not_exists(logger_path)
-
-    # setup the checkpoint dir
-    checkpoint_path = get_checkpoint_folder(global_config)
-    _create_dir_if_not_exists(checkpoint_path)
+    # setup the logger, checkpoints and plots subfolders
+    for key in ["log_dir", "checkpoint_dir", "plot_dir"]:
+        full_path = get_subfolder_path(global_config, key=key)
+        print("key = ", key)
+        print(full_path)
+        global_config[key] = full_path
+        _create_dir_if_not_exists(full_path)
 
 
 def _get_folder_path(global_config: dict):
@@ -44,25 +44,18 @@ def _get_folder_path(global_config: dict):
     return global_dir + folder_name
 
 
-def get_logger_folder(global_config: dict):
+def get_subfolder_path(global_config: dict, key: str):
     """Combine the global dir, with exp. dir and the logger folder."""
-    logdir = global_config.get("log_dir", None)
-    if logdir is None:
+    sub_dir = global_config.get(key, None)
+    if sub_dir is None:
         return None
     folder_path = _get_folder_path(global_config)
-    return folder_path + logdir
-
-
-def get_checkpoint_folder(global_config: dict):
-    checkpt_dir = global_config.get("checkpoint_dir", None)
-    if checkpt_dir is None:
-        return None
-    folder_path = _get_folder_path(global_config)
-    return folder_path + checkpt_dir
+    return folder_path + sub_dir
 
 
 def _create_dir_if_not_exists(path: str):
+    # create a dir with read and write permissions
     if not os.path.exists(path):
-        os.mkdir(path)
+        os.mkdir(path, mode=0o777)
     else:
         logging.info("Path {} already existed.".format(path))

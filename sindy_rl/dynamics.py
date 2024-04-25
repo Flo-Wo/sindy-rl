@@ -228,7 +228,11 @@ class EnsembleSINDyDynamicsModel(BaseDynamicsModel):
         if self.discrete:
             x_list = self.model.simulate(x0, u=u, t=t, **kwargs)
             if np.any(np.abs(x_list) > upper_bound):
-                raise ValueError("Bound exceeded. Likely integration blowup")
+                # TODO(analyze the blow-up)
+                np.save("blowup_error_x0.npy", x_list)
+                np.save("blowup_error_state.npy", x_list)
+                np.save("blowup_error_control.npy", u)
+                raise ValueError("Bound exceeded: DISCRETE. Likely integration blowup")
         else:
             # zero-hold control
             x_list = [x0]
@@ -242,7 +246,12 @@ class EnsembleSINDyDynamicsModel(BaseDynamicsModel):
                 ).y.T[-1]
                 x_list.append(update)
                 if np.any(np.abs(update) > upper_bound):
-                    raise ValueError("Bound exceeded. Likely integration blowup")
+                    np.save("blowup_error_x0.npy", x_list)
+                    np.save("blowup_error.npy", x_list)
+                    np.save("blowup_error_control.npy", u)
+                    raise ValueError(
+                        "Bound exceeded: ZERO-HOLD. Likely integration blowup"
+                    )
             x_list.pop(-1)
         return np.array(x_list)
         # return NotImplementedError

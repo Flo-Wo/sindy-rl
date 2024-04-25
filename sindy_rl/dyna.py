@@ -205,13 +205,15 @@ class DynaSINDy(BaseDynaSINDy):
         """Collect data for a buffer with a given policy"""
         self.logger.info("Collecting data...")
         self.logger.info(rollout_kwargs)
-        trajs_obs, trajs_acts, trajs_rews = rollout_env(env, pi, **rollout_kwargs)
+        trajs_obs, trajs_acts, trajs_rews, traj_real_rew = rollout_env(
+            env, pi, **rollout_kwargs
+        )
         # correct
         # print("\n\ndyna.py::collect_data")
         # print(trajs_rews)
         # print("\n\n")
         buffer.add_data(trajs_obs, trajs_acts, trajs_rews)
-        return trajs_obs, trajs_acts, trajs_rews
+        return trajs_obs, trajs_acts, trajs_rews, traj_real_rew
 
     def fit_dynamics(self):
         """Fit the dynamics model"""

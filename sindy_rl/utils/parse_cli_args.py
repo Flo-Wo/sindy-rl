@@ -18,6 +18,7 @@ def parse_cli_args():
         help="Use the baseline model, default is true. If false, the surrogate model is used.",
         type=bool,
         default=True,
+        action=argparse.BooleanOptionalAction,
         required=False,
     )
     parser.add_argument(
@@ -26,6 +27,7 @@ def parse_cli_args():
         help="Train the model, default is true. If false, the model is evaluated.",
         type=bool,
         default=True,
+        action=argparse.BooleanOptionalAction,
         required=False,
     )
     parser.add_argument(
