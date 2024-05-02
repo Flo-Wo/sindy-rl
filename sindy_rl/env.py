@@ -3,6 +3,7 @@ from gymnasium.spaces.box import Box
 import numpy as np
 from tqdm import tqdm
 from sindy_rl import dynamics
+import logging
 
 from sindy_rl import reward
 from sindy_rl import registry
@@ -161,8 +162,8 @@ class BaseSurrogateEnv(gymnasium.Env):
         # whether to initiliaze the real environment.
         # it is recommended to avoid initializing expensive full-order models
         # and instead sample initial conditions from a buffer.
-        if self.use_real_env or self.use_real_reward:
-            self.init_real_env()
+        # if self.use_real_env or self.use_real_reward:
+        self.init_real_env()
 
         print(
             "\n\nENV.py: real_env = {}, old_api={}, use_real_reward={}".format(
@@ -303,9 +304,9 @@ class BaseSurrogateEnv(gymnasium.Env):
         rew = self.rew_model.predict(next_obs, self.action)
         proj_real_rew = 0
         if self.use_real_reward:
-            proj_real_rew = self.real_env.projected_reward(next_obs, self.action)
-        # rew_diff = (rew - proj_real_rew) / np.abs(rew)
-        # print("real_rew - rew = {}".format(rew_diff))
+            rew = self.real_env.projected_reward(next_obs, self.action)
+        # TODO(clipping reset)
+        # rew = np.clip(rew, a_min=-1e6, a_max=1e6)
 
         self.obs = next_obs
         info = {"proj_real_rew": proj_real_rew}
@@ -327,6 +328,8 @@ class BaseSurrogateEnv(gymnasium.Env):
             buffer_obs = np.concatenate(self.buffer_dict["x"])
             buffer_idx = np.random.choice(len(buffer_obs))
             self.obs = buffer_obs[buffer_idx]
+            # TODO(clipping reset)
+            self.obs = np.clip(self.obs, a_min=-1e4, a_max=1e4)
 
         info = {}
         if self.use_old_api:
@@ -407,6 +410,10 @@ class BaseEnsembleSurrogateEnv(BaseSurrogateEnv):
             lower_bounds_done = np.any(self.obs <= self.obs_bounds[0])
             upper_bounds_done = np.any(self.obs >= self.obs_bounds[1])
             term = lower_bounds_done or upper_bounds_done
+            if term:
+                logging.warning(
+                    "env.is_term(): Detected Integration blow-up in the observation."
+                )
         return term
 
     def reset(self, **kwargs):

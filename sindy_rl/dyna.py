@@ -190,6 +190,7 @@ class DynaSINDy(BaseDynaSINDy):
                 self.off_policy_buffer,
                 self.real_env,
                 self.off_policy_pi,
+                n_rollouts=1,
                 **off_policy_init["kwargs"],
             )
             self.logger.info(
@@ -201,18 +202,16 @@ class DynaSINDy(BaseDynaSINDy):
             buffer_dict = self.off_policy_buffer.to_dict()
             self.drl_config["environment"]["env_config"]["buffer_dict"] = buffer_dict
 
-    def collect_data(self, buffer, env, pi, **rollout_kwargs):
+    def collect_data(self, buffer, env, pi, n_rollouts=1, **rollout_kwargs):
         """Collect data for a buffer with a given policy"""
         self.logger.info("Collecting data...")
         self.logger.info(rollout_kwargs)
-        trajs_obs, trajs_acts, trajs_rews, traj_real_rew = rollout_env(
-            env, pi, **rollout_kwargs
-        )
-        # correct
-        # print("\n\ndyna.py::collect_data")
-        # print(trajs_rews)
-        # print("\n\n")
-        buffer.add_data(trajs_obs, trajs_acts, trajs_rews)
+        for idx in range(n_rollouts):
+            print("Adding {}/{}".format(idx + 1, n_rollouts))
+            trajs_obs, trajs_acts, trajs_rews, traj_real_rew = rollout_env(
+                env, pi, **rollout_kwargs
+            )
+            buffer.add_data(trajs_obs, trajs_acts, trajs_rews)
         return trajs_obs, trajs_acts, trajs_rews, traj_real_rew
 
     def fit_dynamics(self):

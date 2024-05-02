@@ -205,7 +205,8 @@ class EnsembleSINDyDynamicsModel(BaseDynamicsModel):
 
         return self.set_idx_coef_(idx)
 
-    def simulate(self, x0, u, t=None, upper_bound=1e6, **kwargs):
+    # TODO(blowup, upper_boud)
+    def simulate(self, x0, u, t=None, upper_bound=1e4, **kwargs):
         """
         Discrete:
             Wrapper for pysindy model simulator
@@ -230,10 +231,12 @@ class EnsembleSINDyDynamicsModel(BaseDynamicsModel):
             if np.any(np.abs(x_list) > upper_bound):
                 # TODO(analyze the blow-up)
                 # u.shape = (1,8) -> simulate one time step
-                np.save("blowup_error_x0.npy", x_list)
-                np.save("blowup_error_state.npy", x_list)
-                np.save("blowup_error_control.npy", u)
-                raise ValueError("Bound exceeded: DISCRETE. Likely integration blowup")
+                # np.save("blowup_error_x0.npy", x_list)
+                # np.save("blowup_error_state.npy", x_list)
+                # np.save("blowup_error_control.npy", u)
+                # raise ValueError("Bound exceeded: DISCRETE. Likely integration blowup")
+                logging.warning("Bound exceeded: DISCRETE. Likely integration blowup")
+                x_list = np.clip(x_list, a_min=-upper_bound, a_max=upper_bound)
         else:
             # zero-hold control
             x_list = [x0]
@@ -245,14 +248,18 @@ class EnsembleSINDyDynamicsModel(BaseDynamicsModel):
                     args=(np.array([ui]),),
                     **kwargs
                 ).y.T[-1]
-                x_list.append(update)
                 if np.any(np.abs(update) > upper_bound):
-                    np.save("blowup_error_x0.npy", x_list)
-                    np.save("blowup_error.npy", x_list)
-                    np.save("blowup_error_control.npy", u)
-                    raise ValueError(
+                    # np.save("blowup_error_x0.npy", x_list)
+                    # np.save("blowup_error.npy", x_list)
+                    # np.save("blowup_error_control.npy", u)
+                    logging.warning(
                         "Bound exceeded: ZERO-HOLD. Likely integration blowup"
                     )
+                    update = np.clip(update, a_min=-upper_bound, a_max=upper_bound)
+                    # raise ValueError(
+                    #     "Bound exceeded: ZERO-HOLD. Likely integration blowup"
+                    # )
+                x_list.append(update)
             x_list.pop(-1)
         return np.array(x_list)
         # return NotImplementedError

@@ -38,8 +38,17 @@ def parse_cli_args():
         default=30,
         required=False,
     )
+    parser.add_argument(
+        "-f",
+        "--filename",
+        help="Filename to load the model from.",
+        type=str,
+        default="dyn_burgers.yml",
+        required=False,
+    )
     args = parser.parse_args()
     baseline = args.baseline
     train = args.train
     checkpoint = f"checkpoint_{args.checkpoint:06d}"
-    return baseline, train, checkpoint
+    filename = args.filename
+    return baseline, filename, train, checkpoint
